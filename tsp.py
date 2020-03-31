@@ -6,7 +6,7 @@ import mlrose
 
 
 class State:
-    nodes = 8
+    nodes = 6
     width = 100
 
     # Generate random graph
@@ -26,16 +26,37 @@ class State:
             x_j, y_j = G.nodes[j]['coord']
             G.add_edge(i, j, weight=hypot(x_i - x_j, y_i - y_j))
 
-    true_tsp_value = 0  # TODO modify this
+
+    # Compute optimal path length
+
+    optimal_value = 100000000000
+
+    for path in permutations(G.nodes()):
+        #length = self.get_path_length(path=path)
+
+        length = 0
+
+        for node in range(nodes - 1):
+            length += G[path[node]][path[node + 1]]['weight']
+
+        length += G[path[0]][path[nodes - 1]]['weight']
+
+        if (length < optimal_value):
+            optimal_value = length
 
 
     def __init__(self, visited=None):
 
         # visited will have the nodes in order they were traversed
+
+
+
         if (not visited):
             self.visited = list()
+            self.last_visited = None
         else:
             self.visited = visited
+            self.last_visited = visited[-1]
 
 
     #
@@ -62,14 +83,9 @@ class State:
         Return the optimal TSP solution length
         """
 
-        min_length = 100000000000
+        return self.optimal_value
 
-        for path in permutations(self.G.nodes()):
-            length = self.get_path_length(path=path)
-            if (length < min_length):
-                min_length = length
 
-        return min_length
 
 
     def get_path_length(self, path=None):
@@ -81,10 +97,14 @@ class State:
 
         length = 0
 
-        for node in range(self.nodes - 1):
+        #TODO delete
+        if (len(path) != self.nodes):
+            print(f'\nWARNING: The path passed to "get_path_length()" is {len(path)}. (#nodes = {self.nodes})\n')
+
+        for node in range(len(path) - 1):
             length += self.G[path[node]][path[node + 1]]['weight']
 
-        length += self.G[path[0]][path[self.nodes - 1]]['weight']
+        length += self.G[path[0]][path[len(path) - 1]]['weight']
 
         return length
 
@@ -102,7 +122,8 @@ def ApplyAction(CurrentState, Action):
     """
     Get the next state that results from visiting node 'Action'
     """
-    new_visited = list(CurrentState.visited).append(Action)
+    new_visited = list(CurrentState.visited)
+    new_visited.append(Action)
     new_state = State(new_visited)
     return new_state
 
@@ -111,7 +132,7 @@ def GetNextStates(CurrentState):
     # get unexplored nodes
     unexplored_nodes = GetActions(CurrentState)
     if not unexplored_nodes:
-        return None
+        return []
 
     next_states = []
     for node in unexplored_nodes:
@@ -121,21 +142,27 @@ def GetNextStates(CurrentState):
 
 
 def IsTerminal(CurrentState):
-
     if (len(CurrentState.visited) == CurrentState.nodes):
+        #print('SSSSSSSSSS')
         return True
+
+    return False
 
 
 def GetStateRepresentation(CurrentState):
 
-    return (CurrentState.visited[-1], CurrentState.visited)
+    return (CurrentState.last_visited, CurrentState.visited)
 
 
 def GetResult(CurrentState):
 
     if (IsTerminal(CurrentState)):
-        if (CurrentState.get_path_length() <= CurrentState.true_tsp_value * 1.1):
+        if (CurrentState.get_path_length() <= CurrentState.optimal_value * 1.1):
             return 1
-
-    return 0
+        else:
+            return 0
+    else:
+        print(f'\nWARNING: GetResult was passed a non-terminal state. Only terminal states have the result property.'
+              f'\nThe state that was passed: {CurrentState.visited}\n')
+        return 0
 

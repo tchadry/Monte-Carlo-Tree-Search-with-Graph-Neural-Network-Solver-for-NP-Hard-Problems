@@ -154,12 +154,12 @@ class MCTS:
         end=self.game.IsTerminal(currentState)
 
         while(end==False):
-            state = game.GetNextStates(currentState)
+            state = self.game.GetNextStates(currentState)
             currentLevel+=1
 
             end = self.game.IsTerminal(state)
 
-        return game.GetResult(currentState)
+        return self.game.GetResult(currentState)
 
     def Backprop(self,Node,result):
         current = Node
